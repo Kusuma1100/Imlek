@@ -149,16 +149,6 @@
             box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #4CAF50, #2E7D32);
-            color: white;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
-        }
-
         .btn-danger {
             background: linear-gradient(135deg, #f44336, #c62828);
             color: white;
@@ -175,28 +165,45 @@
         }
 
         /* ============================================
-           ZOOM CONTROL
+           CONTROL BOX (Zoom + Position)
            ============================================ */
-        .zoom-control {
+        .control-box {
             background: rgba(255,255,255,0.1);
             padding: 15px;
             border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
-        .zoom-control label {
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-row label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            min-width: 80px;
             font-size: 0.9rem;
         }
 
-        .zoom-value {
+        .control-value {
             color: #FFD700;
             font-weight: bold;
+            min-width: 50px;
+            text-align: right;
         }
 
-        #zoomSlider {
+        .slider-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="range"] {
             width: 100%;
             height: 6px;
             border-radius: 3px;
@@ -205,7 +212,7 @@
             -webkit-appearance: none;
         }
 
-        #zoomSlider::-webkit-slider-thumb {
+        input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px;
             height: 20px;
@@ -215,7 +222,7 @@
             box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
         }
 
-        #zoomSlider::-moz-range-thumb {
+        input[type="range"]::-moz-range-thumb {
             width: 20px;
             height: 20px;
             border-radius: 50%;
@@ -223,6 +230,25 @@
             cursor: pointer;
             border: none;
             box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Position controls grid */
+        .position-controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .position-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .position-label {
+            min-width: 30px;
+            font-weight: bold;
+            color: #FFD700;
         }
 
         /* ============================================
@@ -243,45 +269,6 @@
         .btn-download:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(33, 150, 243, 0.4);
-        }
-
-        /* ============================================
-           RECORDING MODAL
-           ============================================ */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-video {
-            width: 90%;
-            max-width: 400px;
-            border-radius: 12px;
-        }
-
-        .modal-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        .record-timer {
-            font-size: 2rem;
-            color: #f44336;
-            font-weight: bold;
         }
 
         /* ============================================
@@ -373,7 +360,7 @@
          ============================================ -->
     <header class="header">
         <h1>🧧 Video Frame Imlek</h1>
-        <p>Upload atau rekam video hafalan Anda</p>
+        <p>Upload video hafalan Anda</p>
     </header>
 
     <!-- ============================================
@@ -388,13 +375,10 @@
 
         <!-- Controls -->
         <div class="controls">
-            <!-- Upload & Record Buttons -->
+            <!-- Upload Buttons -->
             <div class="btn-group">
                 <button class="btn btn-primary" id="btnUpload">
                     <span>📁</span> Upload Video
-                </button>
-                <button class="btn btn-secondary" id="btnRecord">
-                    <span>📹</span> Rekam
                 </button>
                 <button class="btn btn-danger" id="btnClear" disabled>
                     <span>🗑️</span> Hapus
@@ -402,13 +386,36 @@
             </div>
             <input type="file" id="videoInput" accept="video/*">
 
-            <!-- Zoom Control -->
-            <div class="zoom-control">
-                <label>
-                    <span>🔍 Zoom</span>
-                    <span class="zoom-value" id="zoomValue">1.0x</span>
-                </label>
-                <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" disabled>
+            <!-- Control Box: Zoom + Position -->
+            <div class="control-box">
+                <!-- Zoom Control -->
+                <div class="control-row">
+                    <label>
+                        <span>🔍 Zoom</span>
+                    </label>
+                    <div class="slider-container">
+                        <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" disabled>
+                    </div>
+                    <span class="control-value" id="zoomValue">1.0x</span>
+                </div>
+
+                <!-- Position X (Horizontal) -->
+                <div class="position-row">
+                    <span class="position-label">↔️ X</span>
+                    <div class="slider-container">
+                        <input type="range" id="posXSlider" min="-500" max="500" step="1" value="0" disabled>
+                    </div>
+                    <span class="control-value" id="posXValue">0</span>
+                </div>
+
+                <!-- Position Y (Vertical) -->
+                <div class="position-row">
+                    <span class="position-label">↕️ Y</span>
+                    <div class="slider-container">
+                        <input type="range" id="posYSlider" min="-500" max="500" step="1" value="0" disabled>
+                    </div>
+                    <span class="control-value" id="posYValue">0</span>
+                </div>
             </div>
 
             <!-- Download Button -->
@@ -421,26 +428,13 @@
             <!-- Instructions -->
             <div class="instructions">
                 <strong>Petunjuk:</strong><br>
-                1. Upload video atau rekam langsung<br>
-                2. Gunakan slider untuk zoom in/out<br>
-                3. Drag video untuk mengatur posisi<br>
-                4. Klik Download untuk menyimpan hasil
+                1. Upload video dari gallery<br>
+                2. Gunakan slider Zoom untuk memperbesar/memperkecil<br>
+                3. Gunakan slider X dan Y untuk menggeser posisi video<br>
+                4. Klik Download untuk menyimpan hasil (30fps dengan audio)
             </div>
         </div>
     </main>
-
-    <!-- ============================================
-         RECORDING MODAL
-         ============================================ -->
-    <div class="modal" id="recordModal">
-        <video class="modal-video" id="recordVideo" autoplay muted playsinline></video>
-        <div class="record-timer" id="recordTimer">00:00</div>
-        <div class="modal-controls">
-            <button class="btn btn-secondary" id="btnStartRecord">Mulai Rekam</button>
-            <button class="btn btn-danger" id="btnStopRecord" disabled>Berhenti</button>
-            <button class="btn btn-primary" id="btnCloseModal">Batal</button>
-        </div>
-    </div>
 
     <!-- ============================================
          LOADING OVERLAY
@@ -471,6 +465,7 @@
         const CIRCLE_RADIUS_X = CIRCLE_WIDTH / 2;
         const CIRCLE_RADIUS_Y = CIRCLE_HEIGHT / 2;
         const FRAME_PATH = 'template/frame_imlek.png';
+        const TARGET_FPS = 30; // Target frame rate for export
 
         // ============================================
         // DOM ELEMENTS
@@ -483,20 +478,17 @@
         const videoInput = document.getElementById('videoInput');
         const zoomSlider = document.getElementById('zoomSlider');
         const zoomValue = document.getElementById('zoomValue');
+        const posXSlider = document.getElementById('posXSlider');
+        const posXValue = document.getElementById('posXValue');
+        const posYSlider = document.getElementById('posYSlider');
+        const posYValue = document.getElementById('posYValue');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
-        const recordModal = document.getElementById('recordModal');
-        const recordVideo = document.getElementById('recordVideo');
-        const recordTimer = document.getElementById('recordTimer');
 
         // Buttons
         const btnUpload = document.getElementById('btnUpload');
-        const btnRecord = document.getElementById('btnRecord');
         const btnClear = document.getElementById('btnClear');
         const btnDownload = document.getElementById('btnDownload');
-        const btnStartRecord = document.getElementById('btnStartRecord');
-        const btnStopRecord = document.getElementById('btnStopRecord');
-        const btnCloseModal = document.getElementById('btnCloseModal');
 
         // ============================================
         // STATE VARIABLES
@@ -506,14 +498,6 @@
         let zoomLevel = 1;
         let videoOffsetX = 0;
         let videoOffsetY = 0;
-        let isDragging = false;
-        let dragStartX = 0;
-        let dragStartY = 0;
-        let mediaRecorder = null;
-        let recordedChunks = [];
-        let recordStartTime = 0;
-        let recordInterval = null;
-        let stream = null;
         let animationFrame = null;
 
         // ============================================
@@ -559,12 +543,6 @@
             btnUpload.addEventListener('click', () => videoInput.click());
             videoInput.addEventListener('change', handleVideoUpload);
 
-            // Record buttons
-            btnRecord.addEventListener('click', openRecordModal);
-            btnStartRecord.addEventListener('click', startRecording);
-            btnStopRecord.addEventListener('click', stopRecording);
-            btnCloseModal.addEventListener('click', closeRecordModal);
-
             // Clear button
             btnClear.addEventListener('click', clearVideo);
 
@@ -574,15 +552,9 @@
             // Zoom slider
             zoomSlider.addEventListener('input', handleZoom);
 
-            // Drag functionality (mouse)
-            previewCanvas.addEventListener('mousedown', handleDragStart);
-            window.addEventListener('mousemove', handleDragMove);
-            window.addEventListener('mouseup', handleDragEnd);
-
-            // Drag functionality (touch)
-            previewCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            window.addEventListener('touchmove', handleTouchMove, { passive: false });
-            window.addEventListener('touchend', handleDragEnd);
+            // Position sliders
+            posXSlider.addEventListener('input', handlePosX);
+            posYSlider.addEventListener('input', handlePosY);
 
             // Window resize
             window.addEventListener('resize', handleResize);
@@ -608,7 +580,7 @@
             videoElement = document.createElement('video');
             videoElement.crossOrigin = 'anonymous';
             videoElement.loop = true;
-            videoElement.muted = true;
+            videoElement.muted = false; // IMPORTANT: Unmute for preview (audio enabled)
             videoElement.playsInline = true;
 
             videoElement.onloadedmetadata = () => {
@@ -618,9 +590,15 @@
                 zoomValue.textContent = '1.0x';
                 videoOffsetX = 0;
                 videoOffsetY = 0;
+                posXSlider.value = 0;
+                posXValue.textContent = '0';
+                posYSlider.value = 0;
+                posYValue.textContent = '0';
 
                 // Enable controls
                 zoomSlider.disabled = false;
+                posXSlider.disabled = false;
+                posYSlider.disabled = false;
                 btnClear.disabled = false;
                 btnDownload.disabled = false;
                 circleIndicator.classList.add('has-video');
@@ -636,87 +614,6 @@
         }
 
         // ============================================
-        // VIDEO RECORDING
-        // ============================================
-        async function openRecordModal() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user' }, 
-                    audio: true 
-                });
-                recordVideo.srcObject = stream;
-                recordModal.classList.add('active');
-            } catch (err) {
-                alert('Tidak dapat mengakses kamera: ' + err.message);
-            }
-        }
-
-        function closeRecordModal() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            recordVideo.srcObject = null;
-            recordModal.classList.remove('active');
-            stopRecordTimer();
-        }
-
-        function startRecordTimer() {
-            recordStartTime = Date.now();
-            recordInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
-                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-                const seconds = (elapsed % 60).toString().padStart(2, '0');
-                recordTimer.textContent = `${minutes}:${seconds}`;
-            }, 1000);
-        }
-
-        function stopRecordTimer() {
-            if (recordInterval) {
-                clearInterval(recordInterval);
-                recordInterval = null;
-            }
-            recordTimer.textContent = '00:00';
-        }
-
-        async function startRecording() {
-            recordedChunks = [];
-            
-            try {
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-                
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) {
-                        recordedChunks.push(e.data);
-                    }
-                };
-
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
-                    loadVideo(url);
-                    closeRecordModal();
-                };
-
-                mediaRecorder.start();
-                btnStartRecord.disabled = true;
-                btnStopRecord.disabled = false;
-                startRecordTimer();
-            } catch (err) {
-                alert('Gagal memulai rekaman: ' + err.message);
-            }
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-            btnStartRecord.disabled = false;
-            btnStopRecord.disabled = true;
-            stopRecordTimer();
-        }
-
-        // ============================================
         // ZOOM FUNCTIONALITY
         // ============================================
         function handleZoom(e) {
@@ -725,47 +622,16 @@
         }
 
         // ============================================
-        // DRAG FUNCTIONALITY (MOUSE)
+        // POSITION SLIDERS (X & Y)
         // ============================================
-        function handleDragStart(e) {
-            if (!videoElement) return;
-            isDragging = true;
-            dragStartX = e.clientX - videoOffsetX;
-            dragStartY = e.clientY - videoOffsetY;
-            previewCanvas.style.cursor = 'grabbing';
+        function handlePosX(e) {
+            videoOffsetX = parseInt(e.target.value);
+            posXValue.textContent = videoOffsetX;
         }
 
-        function handleDragMove(e) {
-            if (!isDragging || !videoElement) return;
-            e.preventDefault();
-            
-            videoOffsetX = e.clientX - dragStartX;
-            videoOffsetY = e.clientY - dragStartY;
-        }
-
-        // ============================================
-        // DRAG FUNCTIONALITY (TOUCH)
-        // ============================================
-        function handleTouchStart(e) {
-            if (!videoElement) return;
-            isDragging = true;
-            const touch = e.touches[0];
-            dragStartX = touch.clientX - videoOffsetX;
-            dragStartY = touch.clientY - videoOffsetY;
-        }
-
-        function handleTouchMove(e) {
-            if (!isDragging || !videoElement) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            videoOffsetX = touch.clientX - dragStartX;
-            videoOffsetY = touch.clientY - dragStartY;
-        }
-
-        function handleDragEnd() {
-            isDragging = false;
-            previewCanvas.style.cursor = videoElement ? 'grab' : 'default';
+        function handlePosY(e) {
+            videoOffsetY = parseInt(e.target.value);
+            posYValue.textContent = videoOffsetY;
         }
 
         // ============================================
@@ -780,13 +646,21 @@
 
             // Reset state
             zoomLevel = 1;
-            zoomSlider.value = 1;
-            zoomValue.textContent = '1.0x';
             videoOffsetX = 0;
             videoOffsetY = 0;
 
+            // Reset sliders
+            zoomSlider.value = 1;
+            zoomValue.textContent = '1.0x';
+            posXSlider.value = 0;
+            posXValue.textContent = '0';
+            posYSlider.value = 0;
+            posYValue.textContent = '0';
+
             // Disable controls
             zoomSlider.disabled = true;
+            posXSlider.disabled = true;
+            posYSlider.disabled = true;
             btnClear.disabled = true;
             btnDownload.disabled = true;
             circleIndicator.classList.remove('has-video');
@@ -896,7 +770,7 @@
             const previewDrawWidth = drawWidth * scaleX;
             const previewDrawHeight = drawHeight * scaleY;
 
-            // Calculate position with offset
+            // Calculate position with offset (video bergerak di dalam lingkaran)
             const drawX = centerX - previewDrawWidth / 2 + videoOffsetX * scaleX;
             const drawY = centerY - previewDrawHeight / 2 + videoOffsetY * scaleY;
 
@@ -926,7 +800,7 @@
         }
 
         // ============================================
-        // VIDEO EXPORT
+        // VIDEO EXPORT WITH AUDIO - 30 FPS
         // ============================================
         async function exportVideo() {
             if (!videoElement) {
@@ -974,13 +848,54 @@
             const drawY = CIRCLE_Y - drawHeight / 2 + videoOffsetY;
 
             // Get actual video duration
-            const videoDuration = videoElement.duration || 10;
+            const videoDuration = videoElement.duration;
 
-            // Setup MediaRecorder
-            const stream = canvas.captureStream(30);
-            const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'video/webm;codecs=vp9',
-                videoBitsPerSecond: 8000000
+            // ====== IMPORTANT: CAPTURE BOTH VIDEO AND AUDIO STREAMS ======
+            
+            // Capture canvas stream at 30 FPS
+            const canvasStream = canvas.captureStream(TARGET_FPS);
+            const videoTrack = canvasStream.getVideoTracks()[0];
+
+            // Get audio from original video element
+            const audioContext = new AudioContext();
+            const sourceNode = audioContext.createMediaElementSource(videoElement);
+            const destNode = audioContext.createMediaStreamDestination();
+            sourceNode.connect(destNode);
+            sourceNode.connect(audioContext.destination); // Also play audio
+
+            // Combine video and audio streams
+            const combinedStream = new MediaStream();
+            combinedStream.addTrack(videoTrack);
+            
+            // Add audio tracks if available
+            if (destNode.stream.getAudioTracks().length > 0) {
+                destNode.stream.getAudioTracks().forEach(track => {
+                    combinedStream.addTrack(track);
+                });
+            }
+
+            // Setup MediaRecorder with AUDIO enabled
+            let mediaRecorder;
+            const mimeTypes = [
+                'video/webm;codecs=vp9,opus', // VP9 video + Opus audio
+                'video/webm;codecs=vp8,opus', // VP8 video + Opus audio
+                'video/webm;codecs=h264,opus', // H264 video + Opus audio
+                'video/webm' // Fallback
+            ];
+
+            // Find supported mime type
+            let selectedMimeType = 'video/webm';
+            for (const mimeType of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mimeType)) {
+                    selectedMimeType = mimeType;
+                    break;
+                }
+            }
+
+            mediaRecorder = new MediaRecorder(combinedStream, {
+                mimeType: selectedMimeType,
+                videoBitsPerSecond: 8000000, // 8 Mbps for video
+                audioBitsPerSecond: 128000   // 128 kbps for audio
             });
 
             const chunks = [];
@@ -989,105 +904,121 @@
             };
 
             const exportPromise = new Promise((resolve, reject) => {
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: selectedMimeType });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = `video-imlek-${Date.now()}.webm`;
+                    document.body.appendChild(a);
                     a.click();
-                    URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    // Clean up
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    audioContext.close();
+                    
                     resolve();
                 };
 
-                mediaRecorder.onerror = (e) => reject(e);
+                mediaRecorder.onerror = (e) => {
+                    audioContext.close();
+                    reject(e);
+                };
             });
 
             // Start recording
             mediaRecorder.start();
 
-            // Reset video to start
+            // Reset video to start and unmute
             videoElement.currentTime = 0;
-            videoElement.play();
+            videoElement.muted = false;
+            await videoElement.play();
 
-            // Track render progress
-            let lastRenderedTime = -1;
+            // Frame timing for 30 FPS
+            const frameDuration = 1000 / TARGET_FPS; // ~33.33ms per frame
+            let frameCount = 0;
+            const totalFrames = Math.ceil(videoDuration * TARGET_FPS);
+
+            // Render frames at consistent intervals
             const startTime = performance.now();
-
-            // Render loop - sync with video time
-            while (videoElement.currentTime < videoDuration && !videoElement.ended && !videoElement.paused) {
-                const currentTime = videoElement.currentTime;
+            
+            while (videoElement.currentTime < videoDuration && !videoElement.ended) {
+                const targetTime = frameCount / TARGET_FPS;
                 
-                // Update loading text with progress
-                const progressPercent = Math.min((currentTime / videoDuration) * 100, 100).toFixed(1);
-                loadingText.textContent = `Merender... ${progressPercent}% (${currentTime.toFixed(1)}s / ${videoDuration.toFixed(1)}s)`;
-
-                // Only render if time has advanced (avoid duplicate frames)
-                if (currentTime > lastRenderedTime) {
-                    // Clear canvas
-                    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-                    // Draw frame background (tetap ditampilkan selama durasi video)
-                    if (frameImage && frameImage.complete) {
-                        ctx.drawImage(frameImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                    } else {
-                        // Default background
-                        const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-                        gradient.addColorStop(0, '#8B0000');
-                        gradient.addColorStop(0.5, '#DC143C');
-                        gradient.addColorStop(1, '#8B0000');
-                        ctx.fillStyle = gradient;
-                        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                    }
-
-                    // Draw video in circle
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.ellipse(CIRCLE_X, CIRCLE_Y, CIRCLE_RADIUS_X, CIRCLE_RADIUS_Y, 0, 0, Math.PI * 2);
-                    ctx.clip();
-                    ctx.drawImage(videoElement, drawX, drawY, drawWidth, drawHeight);
-                    ctx.restore();
-
-                    lastRenderedTime = currentTime;
+                // Sync video time to target frame time
+                if (Math.abs(videoElement.currentTime - targetTime) > 0.1) {
+                    videoElement.currentTime = targetTime;
+                    await new Promise(resolve => {
+                        videoElement.onseeked = () => {
+                            videoElement.onseeked = null;
+                            resolve();
+                        };
+                    });
                 }
 
-                // Small delay to allow video to advance
-                await new Promise(r => setTimeout(r, 16)); // ~60fps check
+                // Update progress
+                const progressPercent = (frameCount / totalFrames * 100).toFixed(1);
+                loadingText.textContent = `Merender... ${progressPercent}% (Frame ${frameCount}/${totalFrames})`;
+
+                // Render frame
+                renderFrame(ctx, drawX, drawY, drawWidth, drawHeight);
+
+                // Wait for next frame time
+                const elapsed = performance.now() - startTime;
+                const nextFrameTime = (frameCount + 1) * frameDuration;
+                const delay = Math.max(0, nextFrameTime - elapsed);
+                
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+                frameCount++;
             }
 
-            // Render final frame if needed
-            if (videoElement.currentTime >= videoDuration || videoElement.ended) {
-                videoElement.currentTime = Math.min(videoDuration, videoElement.duration);
-                
-                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                
-                if (frameImage && frameImage.complete) {
-                    ctx.drawImage(frameImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                } else {
-                    const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-                    gradient.addColorStop(0, '#8B0000');
-                    gradient.addColorStop(0.5, '#DC143C');
-                    gradient.addColorStop(1, '#8B0000');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                }
+            // Render final frame
+            videoElement.currentTime = videoDuration;
+            await new Promise(resolve => {
+                videoElement.onseeked = () => {
+                    videoElement.onseeked = null;
+                    resolve();
+                };
+            });
+            renderFrame(ctx, drawX, drawY, drawWidth, drawHeight);
 
-                ctx.save();
-                ctx.beginPath();
-                ctx.ellipse(CIRCLE_X, CIRCLE_Y, CIRCLE_RADIUS_X, CIRCLE_RADIUS_Y, 0, 0, Math.PI * 2);
-                ctx.clip();
-                ctx.drawImage(videoElement, drawX, drawY, drawWidth, drawHeight);
-                ctx.restore();
-            }
-
-            // Small delay to ensure final frame is captured
-            await new Promise(r => setTimeout(r, 100));
+            // Wait a bit to capture last frames
+            await new Promise(r => setTimeout(r, 200));
 
             // Stop recording
             mediaRecorder.stop();
             videoElement.pause();
 
             return exportPromise;
+        }
+
+        // Helper function to render a single frame
+        function renderFrame(ctx, drawX, drawY, drawWidth, drawHeight) {
+            // Clear canvas
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Draw frame background
+            if (frameImage && frameImage.complete) {
+                ctx.drawImage(frameImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            } else {
+                // Default background
+                const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+                gradient.addColorStop(0, '#8B0000');
+                gradient.addColorStop(0.5, '#DC143C');
+                gradient.addColorStop(1, '#8B0000');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            }
+
+            // Draw video in circle
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(CIRCLE_X, CIRCLE_Y, CIRCLE_RADIUS_X, CIRCLE_RADIUS_Y, 0, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(videoElement, drawX, drawY, drawWidth, drawHeight);
+            ctx.restore();
         }
 
         // ============================================
