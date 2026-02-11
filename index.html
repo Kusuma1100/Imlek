@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Frame Imlek - Editor</title>
+    <style>
+        /* ============================================
+           RESET & BASE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        /* ============================================
+           MAIN CONTAINER
+           ============================================ */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* ============================================
+           CANVAS CONTAINER (PREVIEW AREA)
+           ============================================ */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1080 / 1920;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        #previewCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Placeholder circle indicator */
+        .circle-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: calc(848.9 / 1080 * 100%);
+            height: calc(844 / 1920 * 100%);
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .circle-indicator::after {
+            content: 'Area Video';
+            color: rgba(0, 255, 0, 0.6);
+            font-size: 12px;
+        }
+
+        .circle-indicator.has-video {
+            display: none;
+        }
+
+        /* ============================================
+           CONTROLS SECTION
+           ============================================ */
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Button Groups */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #c62828);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        /* Hidden file input */
+        #videoInput {
+            display: none;
+        }
+
+        /* ============================================
+           ZOOM CONTROL
+           ============================================ */
+        .zoom-control {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .zoom-control label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .zoom-value {
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        #zoomSlider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        #zoomSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FFD700;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+        }
+
+        #zoomSlider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FFD700;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* ============================================
+           DOWNLOAD BUTTON
+           ============================================ */
+        .download-section {
+            margin-top: 10px;
+        }
+
+        .btn-download {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #2196F3, #1565C0);
+            color: white;
+        }
+
+        .btn-download:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        /* ============================================
+           RECORDING MODAL
+           ============================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-video {
+            width: 90%;
+            max-width: 400px;
+            border-radius: 12px;
+        }
+
+        .modal-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .record-timer {
+            font-size: 2rem;
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        /* ============================================
+           LOADING OVERLAY
+           ============================================ */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,215,0,0.3);
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #FFD700;
+            font-size: 1.1rem;
+        }
+
+        /* ============================================
+           INSTRUCTIONS
+           ============================================ */
+        .instructions {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .instructions strong {
+            color: #FFD700;
+        }
+
+        /* ============================================
+           HIDDEN EXPORT CANVAS
+           ============================================ */
+        #exportCanvas {
+            display: none;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 400px) {
+            .canvas-wrapper {
+                max-width: 280px;
+            }
+
+            .header h1 {
+                font-size: 1.4rem;
+            }
+
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- ============================================
+         HEADER
+         ============================================ -->
+    <header class="header">
+        <h1>🧧 Video Frame Imlek</h1>
+        <p>Upload atau rekam video hafalan Anda</p>
+    </header>
+
+    <!-- ============================================
+         MAIN CONTAINER
+         ============================================ -->
+    <main class="main-container">
+        <!-- Canvas Preview Area -->
+        <div class="canvas-wrapper">
+            <canvas id="previewCanvas"></canvas>
+            <div class="circle-indicator" id="circleIndicator">Area Video</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <!-- Upload & Record Buttons -->
+            <div class="btn-group">
+                <button class="btn btn-primary" id="btnUpload">
+                    <span>📁</span> Upload Video
+                </button>
+                <button class="btn btn-secondary" id="btnRecord">
+                    <span>📹</span> Rekam
+                </button>
+                <button class="btn btn-danger" id="btnClear" disabled>
+                    <span>🗑️</span> Hapus
+                </button>
+            </div>
+            <input type="file" id="videoInput" accept="video/*">
+
+            <!-- Zoom Control -->
+            <div class="zoom-control">
+                <label>
+                    <span>🔍 Zoom</span>
+                    <span class="zoom-value" id="zoomValue">1.0x</span>
+                </label>
+                <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" disabled>
+            </div>
+
+            <!-- Download Button -->
+            <div class="download-section">
+                <button class="btn btn-download" id="btnDownload" disabled>
+                    <span>⬇️</span> Download Video (1080x1920)
+                </button>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions">
+                <strong>Petunjuk:</strong><br>
+                1. Upload video atau rekam langsung<br>
+                2. Gunakan slider untuk zoom in/out<br>
+                3. Drag video untuk mengatur posisi<br>
+                4. Klik Download untuk menyimpan hasil
+            </div>
+        </div>
+    </main>
+
+    <!-- ============================================
+         RECORDING MODAL
+         ============================================ -->
+    <div class="modal" id="recordModal">
+        <video class="modal-video" id="recordVideo" autoplay muted playsinline></video>
+        <div class="record-timer" id="recordTimer">00:00</div>
+        <div class="modal-controls">
+            <button class="btn btn-secondary" id="btnStartRecord">Mulai Rekam</button>
+            <button class="btn btn-danger" id="btnStopRecord" disabled>Berhenti</button>
+            <button class="btn btn-primary" id="btnCloseModal">Batal</button>
+        </div>
+    </div>
+
+    <!-- ============================================
+         LOADING OVERLAY
+         ============================================ -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Memproses video...</div>
+    </div>
+
+    <!-- ============================================
+         HIDDEN EXPORT CANVAS
+         ============================================ -->
+    <canvas id="exportCanvas" width="1080" height="1920"></canvas>
+
+    <!-- ============================================
+         JAVASCRIPT
+         ============================================ -->
+    <script>
+        // ============================================
+        // CONSTANTS & CONFIGURATION
+        // ============================================
+        const CANVAS_WIDTH = 1080;
+        const CANVAS_HEIGHT = 1920;
+        const CIRCLE_WIDTH = 848.9;
+        const CIRCLE_HEIGHT = 844;
+        const CIRCLE_X = CANVAS_WIDTH / 2;
+        const CIRCLE_Y = CANVAS_HEIGHT / 2;
+        const CIRCLE_RADIUS_X = CIRCLE_WIDTH / 2;
+        const CIRCLE_RADIUS_Y = CIRCLE_HEIGHT / 2;
+        const FRAME_PATH = 'template/frame_imlek.png';
+
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewCtx = previewCanvas.getContext('2d');
+        const exportCanvas = document.getElementById('exportCanvas');
+        const exportCtx = exportCanvas.getContext('2d');
+        const circleIndicator = document.getElementById('circleIndicator');
+        const videoInput = document.getElementById('videoInput');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const zoomValue = document.getElementById('zoomValue');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const recordModal = document.getElementById('recordModal');
+        const recordVideo = document.getElementById('recordVideo');
+        const recordTimer = document.getElementById('recordTimer');
+
+        // Buttons
+        const btnUpload = document.getElementById('btnUpload');
+        const btnRecord = document.getElementById('btnRecord');
+        const btnClear = document.getElementById('btnClear');
+        const btnDownload = document.getElementById('btnDownload');
+        const btnStartRecord = document.getElementById('btnStartRecord');
+        const btnStopRecord = document.getElementById('btnStopRecord');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+
+        // ============================================
+        // STATE VARIABLES
+        // ============================================
+        let videoElement = null;
+        let frameImage = null;
+        let zoomLevel = 1;
+        let videoOffsetX = 0;
+        let videoOffsetY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordStartTime = 0;
+        let recordInterval = null;
+        let stream = null;
+        let animationFrame = null;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        function init() {
+            // Set preview canvas size (scaled for display)
+            const wrapper = document.querySelector('.canvas-wrapper');
+            const rect = wrapper.getBoundingClientRect();
+            previewCanvas.width = rect.width;
+            previewCanvas.height = rect.height;
+
+            // Load frame image
+            loadFrameImage();
+
+            // Initial render
+            renderPreview();
+
+            // Setup event listeners
+            setupEventListeners();
+        }
+
+        // Load frame background image
+        function loadFrameImage() {
+            frameImage = new Image();
+            frameImage.crossOrigin = 'anonymous';
+            frameImage.onload = () => {
+                renderPreview();
+            };
+            frameImage.onerror = () => {
+                console.warn('Frame image not found, using default background');
+                frameImage = null;
+                renderPreview();
+            };
+            frameImage.src = FRAME_PATH;
+        }
+
+        // ============================================
+        // EVENT LISTENERS SETUP
+        // ============================================
+        function setupEventListeners() {
+            // Upload button
+            btnUpload.addEventListener('click', () => videoInput.click());
+            videoInput.addEventListener('change', handleVideoUpload);
+
+            // Record buttons
+            btnRecord.addEventListener('click', openRecordModal);
+            btnStartRecord.addEventListener('click', startRecording);
+            btnStopRecord.addEventListener('click', stopRecording);
+            btnCloseModal.addEventListener('click', closeRecordModal);
+
+            // Clear button
+            btnClear.addEventListener('click', clearVideo);
+
+            // Download button
+            btnDownload.addEventListener('click', exportVideo);
+
+            // Zoom slider
+            zoomSlider.addEventListener('input', handleZoom);
+
+            // Drag functionality (mouse)
+            previewCanvas.addEventListener('mousedown', handleDragStart);
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
+
+            // Drag functionality (touch)
+            previewCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            window.addEventListener('touchmove', handleTouchMove, { passive: false });
+            window.addEventListener('touchend', handleDragEnd);
+
+            // Window resize
+            window.addEventListener('resize', handleResize);
+        }
+
+        // ============================================
+        // VIDEO UPLOAD
+        // ============================================
+        function handleVideoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+            loadVideo(url);
+        }
+
+        function loadVideo(url) {
+            if (videoElement) {
+                videoElement.pause();
+                videoElement.src = '';
+            }
+
+            videoElement = document.createElement('video');
+            videoElement.crossOrigin = 'anonymous';
+            videoElement.loop = true;
+            videoElement.muted = true;
+            videoElement.playsInline = true;
+
+            videoElement.onloadedmetadata = () => {
+                // Reset zoom and position
+                zoomLevel = 1;
+                zoomSlider.value = 1;
+                zoomValue.textContent = '1.0x';
+                videoOffsetX = 0;
+                videoOffsetY = 0;
+
+                // Enable controls
+                zoomSlider.disabled = false;
+                btnClear.disabled = false;
+                btnDownload.disabled = false;
+                circleIndicator.classList.add('has-video');
+
+                // Start playing
+                videoElement.play();
+
+                // Start render loop
+                startRenderLoop();
+            };
+
+            videoElement.src = url;
+        }
+
+        // ============================================
+        // VIDEO RECORDING
+        // ============================================
+        async function openRecordModal() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user' }, 
+                    audio: true 
+                });
+                recordVideo.srcObject = stream;
+                recordModal.classList.add('active');
+            } catch (err) {
+                alert('Tidak dapat mengakses kamera: ' + err.message);
+            }
+        }
+
+        function closeRecordModal() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            recordVideo.srcObject = null;
+            recordModal.classList.remove('active');
+            stopRecordTimer();
+        }
+
+        function startRecordTimer() {
+            recordStartTime = Date.now();
+            recordInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                recordTimer.textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function stopRecordTimer() {
+            if (recordInterval) {
+                clearInterval(recordInterval);
+                recordInterval = null;
+            }
+            recordTimer.textContent = '00:00';
+        }
+
+        async function startRecording() {
+            recordedChunks = [];
+            
+            try {
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    loadVideo(url);
+                    closeRecordModal();
+                };
+
+                mediaRecorder.start();
+                btnStartRecord.disabled = true;
+                btnStopRecord.disabled = false;
+                startRecordTimer();
+            } catch (err) {
+                alert('Gagal memulai rekaman: ' + err.message);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            btnStartRecord.disabled = false;
+            btnStopRecord.disabled = true;
+            stopRecordTimer();
+        }
+
+        // ============================================
+        // ZOOM FUNCTIONALITY
+        // ============================================
+        function handleZoom(e) {
+            zoomLevel = parseFloat(e.target.value);
+            zoomValue.textContent = zoomLevel.toFixed(1) + 'x';
+        }
+
+        // ============================================
+        // DRAG FUNCTIONALITY (MOUSE)
+        // ============================================
+        function handleDragStart(e) {
+            if (!videoElement) return;
+            isDragging = true;
+            dragStartX = e.clientX - videoOffsetX;
+            dragStartY = e.clientY - videoOffsetY;
+            previewCanvas.style.cursor = 'grabbing';
+        }
+
+        function handleDragMove(e) {
+            if (!isDragging || !videoElement) return;
+            e.preventDefault();
+            
+            videoOffsetX = e.clientX - dragStartX;
+            videoOffsetY = e.clientY - dragStartY;
+        }
+
+        // ============================================
+        // DRAG FUNCTIONALITY (TOUCH)
+        // ============================================
+        function handleTouchStart(e) {
+            if (!videoElement) return;
+            isDragging = true;
+            const touch = e.touches[0];
+            dragStartX = touch.clientX - videoOffsetX;
+            dragStartY = touch.clientY - videoOffsetY;
+        }
+
+        function handleTouchMove(e) {
+            if (!isDragging || !videoElement) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            videoOffsetX = touch.clientX - dragStartX;
+            videoOffsetY = touch.clientY - dragStartY;
+        }
+
+        function handleDragEnd() {
+            isDragging = false;
+            previewCanvas.style.cursor = videoElement ? 'grab' : 'default';
+        }
+
+        // ============================================
+        // CLEAR VIDEO
+        // ============================================
+        function clearVideo() {
+            if (videoElement) {
+                videoElement.pause();
+                videoElement.src = '';
+                videoElement = null;
+            }
+
+            // Reset state
+            zoomLevel = 1;
+            zoomSlider.value = 1;
+            zoomValue.textContent = '1.0x';
+            videoOffsetX = 0;
+            videoOffsetY = 0;
+
+            // Disable controls
+            zoomSlider.disabled = true;
+            btnClear.disabled = true;
+            btnDownload.disabled = true;
+            circleIndicator.classList.remove('has-video');
+
+            // Stop render loop
+            stopRenderLoop();
+
+            // Render once
+            renderPreview();
+        }
+
+        // ============================================
+        // RENDER LOOP
+        // ============================================
+        function startRenderLoop() {
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            renderLoop();
+        }
+
+        function stopRenderLoop() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+        }
+
+        function renderLoop() {
+            renderPreview();
+            animationFrame = requestAnimationFrame(renderLoop);
+        }
+
+        // ============================================
+        // PREVIEW RENDERING
+        // ============================================
+        function renderPreview() {
+            const ctx = previewCtx;
+            const width = previewCanvas.width;
+            const height = previewCanvas.height;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Calculate scale factors
+            const scaleX = width / CANVAS_WIDTH;
+            const scaleY = height / CANVAS_HEIGHT;
+
+            // Draw frame background
+            if (frameImage && frameImage.complete) {
+                ctx.drawImage(frameImage, 0, 0, width, height);
+            } else {
+                // Default gradient background
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, '#8B0000');
+                gradient.addColorStop(0.5, '#DC143C');
+                gradient.addColorStop(1, '#8B0000');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw placeholder text
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Frame Imlek', width / 2, height / 2 - 20);
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#aaa';
+                ctx.fillText('Letakkan frame_imlek.png', width / 2, height / 2 + 10);
+                ctx.fillText('di folder template/', width / 2, height / 2 + 25);
+            }
+
+            // Draw video in circle area
+            if (videoElement && videoElement.readyState >= 2) {
+                drawVideoInCircle(ctx, width, height, scaleX, scaleY);
+            } else {
+                // Draw placeholder circle
+                drawPlaceholderCircle(ctx, width, height, scaleX, scaleY);
+            }
+        }
+
+        function drawVideoInCircle(ctx, width, height, scaleX, scaleY) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radiusX = CIRCLE_RADIUS_X * scaleX;
+            const radiusY = CIRCLE_RADIUS_Y * scaleY;
+
+            // Save context for clipping
+            ctx.save();
+
+            // Create circle clip path
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+            ctx.clip();
+
+            // Calculate video dimensions with zoom
+            const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
+            const circleAspect = CIRCLE_WIDTH / CIRCLE_HEIGHT;
+
+            let drawWidth, drawHeight;
+            if (videoAspect > circleAspect) {
+                drawHeight = CIRCLE_HEIGHT * zoomLevel;
+                drawWidth = drawHeight * videoAspect;
+            } else {
+                drawWidth = CIRCLE_WIDTH * zoomLevel;
+                drawHeight = drawWidth / videoAspect;
+            }
+
+            // Scale to preview size
+            const previewDrawWidth = drawWidth * scaleX;
+            const previewDrawHeight = drawHeight * scaleY;
+
+            // Calculate position with offset
+            const drawX = centerX - previewDrawWidth / 2 + videoOffsetX * scaleX;
+            const drawY = centerY - previewDrawHeight / 2 + videoOffsetY * scaleY;
+
+            // Draw video
+            ctx.drawImage(videoElement, drawX, drawY, previewDrawWidth, previewDrawHeight);
+
+            // Restore context
+            ctx.restore();
+        }
+
+        function drawPlaceholderCircle(ctx, width, height, scaleX, scaleY) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radiusX = CIRCLE_RADIUS_X * scaleX;
+            const radiusY = CIRCLE_RADIUS_Y * scaleY;
+
+            // Draw green circle background
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#00FF00';
+            ctx.fill();
+
+            // Draw border
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // ============================================
+        // VIDEO EXPORT
+        // ============================================
+        async function exportVideo() {
+            if (!videoElement) {
+                alert('Tidak ada video untuk diekspor');
+                return;
+            }
+
+            // Show loading
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = 'Mempersiapkan render...';
+
+            // Disable button
+            btnDownload.disabled = true;
+
+            try {
+                await renderAndExport();
+            } catch (err) {
+                console.error('Export error:', err);
+                alert('Gagal mengekspor video: ' + err.message);
+            } finally {
+                loadingOverlay.classList.remove('active');
+                btnDownload.disabled = false;
+            }
+        }
+
+        async function renderAndExport() {
+            const ctx = exportCtx;
+            const canvas = exportCanvas;
+
+            // Calculate video dimensions with zoom
+            const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
+            const circleAspect = CIRCLE_WIDTH / CIRCLE_HEIGHT;
+
+            let drawWidth, drawHeight;
+            if (videoAspect > circleAspect) {
+                drawHeight = CIRCLE_HEIGHT * zoomLevel;
+                drawWidth = drawHeight * videoAspect;
+            } else {
+                drawWidth = CIRCLE_WIDTH * zoomLevel;
+                drawHeight = drawWidth / videoAspect;
+            }
+
+            // Calculate position with offset
+            const drawX = CIRCLE_X - drawWidth / 2 + videoOffsetX;
+            const drawY = CIRCLE_Y - drawHeight / 2 + videoOffsetY;
+
+            // Get actual video duration
+            const videoDuration = videoElement.duration || 10;
+
+            // Setup MediaRecorder
+            const stream = canvas.captureStream(30);
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9',
+                videoBitsPerSecond: 8000000
+            });
+
+            const chunks = [];
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            const exportPromise = new Promise((resolve, reject) => {
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video-imlek-${Date.now()}.webm`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    resolve();
+                };
+
+                mediaRecorder.onerror = (e) => reject(e);
+            });
+
+            // Start recording
+            mediaRecorder.start();
+
+            // Reset video to start
+            videoElement.currentTime = 0;
+            videoElement.play();
+
+            // Track render progress
+            let lastRenderedTime = -1;
+            const startTime = performance.now();
+
+            // Render loop - sync with video time
+            while (videoElement.currentTime < videoDuration && !videoElement.ended && !videoElement.paused) {
+                const currentTime = videoElement.currentTime;
+                
+                // Update loading text with progress
+                const progressPercent = Math.min((currentTime / videoDuration) * 100, 100).toFixed(1);
+                loadingText.textContent = `Merender... ${progressPercent}% (${currentTime.toFixed(1)}s / ${videoDuration.toFixed(1)}s)`;
+
+                // Only render if time has advanced (avoid duplicate frames)
+                if (currentTime > lastRenderedTime) {
+                    // Clear canvas
+                    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                    // Draw frame background (tetap ditampilkan selama durasi video)
+                    if (frameImage && frameImage.complete) {
+                        ctx.drawImage(frameImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                    } else {
+                        // Default background
+                        const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+                        gradient.addColorStop(0, '#8B0000');
+                        gradient.addColorStop(0.5, '#DC143C');
+                        gradient.addColorStop(1, '#8B0000');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                    }
+
+                    // Draw video in circle
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.ellipse(CIRCLE_X, CIRCLE_Y, CIRCLE_RADIUS_X, CIRCLE_RADIUS_Y, 0, 0, Math.PI * 2);
+                    ctx.clip();
+                    ctx.drawImage(videoElement, drawX, drawY, drawWidth, drawHeight);
+                    ctx.restore();
+
+                    lastRenderedTime = currentTime;
+                }
+
+                // Small delay to allow video to advance
+                await new Promise(r => setTimeout(r, 16)); // ~60fps check
+            }
+
+            // Render final frame if needed
+            if (videoElement.currentTime >= videoDuration || videoElement.ended) {
+                videoElement.currentTime = Math.min(videoDuration, videoElement.duration);
+                
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                
+                if (frameImage && frameImage.complete) {
+                    ctx.drawImage(frameImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                } else {
+                    const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+                    gradient.addColorStop(0, '#8B0000');
+                    gradient.addColorStop(0.5, '#DC143C');
+                    gradient.addColorStop(1, '#8B0000');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                }
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.ellipse(CIRCLE_X, CIRCLE_Y, CIRCLE_RADIUS_X, CIRCLE_RADIUS_Y, 0, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(videoElement, drawX, drawY, drawWidth, drawHeight);
+                ctx.restore();
+            }
+
+            // Small delay to ensure final frame is captured
+            await new Promise(r => setTimeout(r, 100));
+
+            // Stop recording
+            mediaRecorder.stop();
+            videoElement.pause();
+
+            return exportPromise;
+        }
+
+        // ============================================
+        // WINDOW RESIZE HANDLER
+        // ============================================
+        function handleResize() {
+            const wrapper = document.querySelector('.canvas-wrapper');
+            const rect = wrapper.getBoundingClientRect();
+            previewCanvas.width = rect.width;
+            previewCanvas.height = rect.height;
+            renderPreview();
+        }
+
+        // ============================================
+        // START APPLICATION
+        // ============================================
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
